@@ -1,0 +1,1385 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Global Checkbox | Real-Time Shared Checkbox Grid</title>
+    <meta
+      name="description"
+      content="A global real-time interactive 10,000 checkbox grid where users from around the world can connect and update checkboxes."
+    />
+    <meta
+      name="keywords"
+      content="10000 checkbox, realtime app, socket.io project, live sync, global users, shared state, realtime grid"
+    />
+    <meta name="author" content="Sagar Kemble" />
+    <link
+      rel="canonical"
+      href="https://one0-000-global-checkbox.onrender.com/"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://one0-000-global-checkbox.onrender.com/logo.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="https://one0-000-global-checkbox.onrender.com/logo.png"
+    />
+    <meta property="og:title" content="10,000 Global Checkbox" />
+    <meta
+      property="og:description"
+      content="10,000 checkboxes. One shared state. Updated live by users around the world."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://one0-000-global-checkbox.onrender.com/"
+    />
+    <meta
+      property="og:image"
+      content="https://one0-000-global-checkbox.onrender.com/logo.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="10,000 Global Checkbox" />
+    <meta
+      name="twitter:description"
+      content="A global real-time interactive 10,000 checkbox grid where users from around the world can connect and update checkboxes."
+    />
+    <meta
+      name="twitter:image"
+      content="https://one0-000-global-checkbox.onrender.com/logo.png"
+    />
+    <meta name="theme-color" content="#09090b" />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Geist:wght@400;500&display=swap");
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #09090b;
+        --surface: #18181b;
+        --border: #27272a;
+        --border-focus: #52525b;
+        --accent: #f4f4f5;
+        --accent-muted: #a1a1aa;
+        --check-bg: #f4f4f5;
+        --check-fg: #09090b;
+        --ring: rgba(244, 244, 245, 0.15);
+        --radius: 4px;
+        --danger: #ef4444;
+        --danger-muted: rgba(239, 68, 68, 0.1);
+        --cb-size: 16px;
+        --cb-gap: 10px;
+      }
+
+      html,
+      body {
+        height: 100%;
+        background: var(--bg);
+        color: var(--accent);
+        font-family: "Geist", sans-serif;
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+
+      ::-webkit-scrollbar {
+        display: none;
+      }
+      * {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      body {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 24px;
+      }
+
+      .panel {
+        width: 100%;
+        max-width: 100%;
+        padding: 20px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .header {
+        margin-bottom: 16px;
+        text-align: center;
+      }
+
+      .title {
+        font-size: 24px;
+        font-weight: 500;
+        color: var(--accent);
+        margin-bottom: 8px;
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .globe-icon {
+        width: 24px;
+        height: 24px;
+        stroke: var(--accent);
+        stroke-width: 1.5;
+        fill: none;
+      }
+
+      .title-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1.5px solid var(--border-focus);
+        background: var(--border);
+        flex-shrink: 0;
+        display: none;
+        cursor: pointer;
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+      }
+      .title-avatar:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 2px var(--ring);
+      }
+
+      .title-avatar-fallback {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #3f3f46;
+        border: 1.5px solid var(--border-focus);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--accent);
+        flex-shrink: 0;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+      }
+      .title-avatar-fallback:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 2px var(--ring);
+      }
+
+      .title-text-clickable {
+        cursor: pointer;
+        transition: color 0.15s;
+      }
+      .title-text-clickable:hover {
+        color: var(--accent-muted);
+      }
+
+      .user-drawer-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 500;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+      .user-drawer-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .user-drawer {
+        background: var(--surface);
+        border: 1px solid var(--border-focus);
+        border-radius: 12px;
+        padding: 28px;
+        width: 100%;
+        max-width: 380px;
+        margin: 16px;
+        transform: translateY(12px) scale(0.97);
+        transition:
+          transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+          opacity 0.2s ease;
+        opacity: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        position: relative;
+      }
+      .user-drawer-overlay.active .user-drawer {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+
+      .user-drawer-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        color: var(--accent-muted);
+        transition:
+          color 0.12s,
+          background 0.12s;
+        outline: none;
+      }
+      .user-drawer-close:hover {
+        background: #27272a;
+        color: var(--accent);
+      }
+      .user-drawer-close svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+      }
+
+      .user-drawer-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border);
+      }
+      .user-drawer-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--border-focus);
+        background: var(--border);
+      }
+      .user-drawer-avatar-fallback {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: #3f3f46;
+        border: 2px solid var(--border-focus);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--accent);
+        letter-spacing: 0.02em;
+      }
+      .user-drawer-name {
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--accent);
+        text-align: center;
+      }
+      .user-drawer-email {
+        font-size: 13px;
+        color: var(--accent-muted);
+        font-family: "Geist Mono", monospace;
+        text-align: center;
+      }
+      .user-drawer-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .drawer-action-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 14px;
+        border: none;
+        background: transparent;
+        color: var(--accent-muted);
+        font-family: "Geist", sans-serif;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 7px;
+        transition:
+          background 0.12s,
+          color 0.12s;
+        text-align: left;
+        outline: none;
+        border: 1px solid var(--border);
+      }
+      .drawer-action-btn:hover {
+        background: #27272a;
+        color: var(--accent);
+        border-color: var(--border-focus);
+      }
+      .drawer-action-btn.danger {
+        color: var(--danger);
+        border-color: var(--danger);
+      }
+      .drawer-action-btn.danger:hover {
+        background: var(--danger-muted);
+      }
+      .drawer-action-btn svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        flex-shrink: 0;
+      }
+
+      .subtitle {
+        font-size: 14px;
+        color: var(--accent-muted);
+        line-height: 1.5;
+      }
+
+      .badges {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 32px;
+      }
+      .badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-family: "Geist Mono", monospace;
+        font-size: 12px;
+        color: var(--accent-muted);
+      }
+      .badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent-muted);
+      }
+      .badge-dot.online {
+        background: #22c55e;
+      }
+      .badge-dot.checked {
+        background: #3b82f6;
+      }
+      .badge-value {
+        color: var(--accent);
+        font-weight: 500;
+      }
+
+      #vscroll-viewport {
+        width: 100%;
+        overflow-y: auto;
+      }
+
+      #vscroll-spacer {
+        position: relative;
+        width: 100%;
+      }
+
+      #vscroll-window {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        display: grid;
+      }
+
+      .cb-wrap {
+        display: contents;
+      }
+
+      input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: var(--cb-size);
+        height: var(--cb-size);
+        border: 1px solid var(--border-focus);
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+        position: relative;
+        transition:
+          background 0.12s,
+          border-color 0.12s,
+          box-shadow 0.12s;
+        outline: none;
+        display: block;
+        flex-shrink: 0;
+      }
+      input[type="checkbox"]:hover {
+        border-color: var(--accent-muted);
+      }
+      input[type="checkbox"]:focus-visible {
+        box-shadow: 0 0 0 2px var(--ring);
+      }
+      input[type="checkbox"]:checked {
+        background: var(--check-bg);
+        border-color: var(--check-bg);
+      }
+      input[type="checkbox"]:checked::after {
+        content: "";
+        display: block;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 9px;
+        height: 7px;
+        transform: translate(-50%, -55%);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 7'%3E%3Cpath d='M1 3.5L3.5 6L8 1' stroke='%2309090b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-size: contain;
+      }
+
+      .loading-screen {
+        position: fixed;
+        inset: 0;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        z-index: 1000;
+        transition: opacity 0.3s ease;
+      }
+      .loading-screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .loading-text {
+        font-family: "Geist Mono", monospace;
+        font-size: 13px;
+        color: var(--accent);
+        letter-spacing: 0.5px;
+      }
+      .loading-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent-muted);
+        animation: pulse 1.2s ease-in-out infinite;
+      }
+      .dot:nth-child(1) {
+        animation-delay: 0s;
+      }
+      .dot:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .dot:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      @keyframes pulse {
+        0%,
+        80%,
+        100% {
+          opacity: 0.2;
+          transform: scale(0.8);
+        }
+        40% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(16px);
+        background: var(--surface);
+        border: 1px solid var(--border-focus);
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 13px;
+        color: var(--accent);
+        font-family: "Geist Mono", monospace;
+        z-index: 999;
+        opacity: 0;
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      .toast.error {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 500;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+      .modal-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .modal {
+        background: var(--surface);
+        border: 1px solid var(--border-focus);
+        border-radius: 12px;
+        padding: 32px 28px 28px;
+        width: 100%;
+        max-width: 360px;
+        margin: 16px;
+        transform: translateY(12px) scale(0.97);
+        transition:
+          transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+          opacity 0.2s ease;
+        opacity: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .modal-overlay.active .modal {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+
+      .modal-header {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .modal-icon {
+        width: 36px;
+        height: 36px;
+        background: #27272a;
+        border: 1px solid var(--border-focus);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 4px;
+      }
+      .modal-icon svg {
+        width: 18px;
+        height: 18px;
+        stroke: var(--accent);
+        fill: none;
+        stroke-width: 1.6;
+      }
+      .modal-title {
+        font-size: 17px;
+        font-weight: 500;
+        color: var(--accent);
+        letter-spacing: -0.3px;
+      }
+      .modal-desc {
+        font-size: 13px;
+        color: var(--accent-muted);
+        line-height: 1.55;
+      }
+      .modal-desc strong {
+        color: var(--accent);
+        font-weight: 500;
+      }
+
+      .modal-divider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 11px;
+        color: #3f3f46;
+        font-family: "Geist Mono", monospace;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .modal-divider::before,
+      .modal-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+
+      .sagarauth-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 11px 16px;
+        background: var(--accent);
+        color: var(--bg);
+        border: none;
+        border-radius: 7px;
+        font-family: "Geist", sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+          opacity 0.15s,
+          transform 0.12s,
+          box-shadow 0.15s;
+        letter-spacing: -0.01em;
+        outline: none;
+        text-decoration: none;
+      }
+      .sagarauth-btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(244, 244, 245, 0.15);
+      }
+      .sagarauth-btn:active {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      .sagarauth-btn svg {
+        width: 16px;
+        height: 16px;
+        stroke: var(--bg);
+        fill: none;
+        stroke-width: 2;
+        flex-shrink: 0;
+      }
+      .sagarauth-btn.loading {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+      .sagarauth-btn.loading .btn-text::after {
+        content: "…";
+      }
+
+      .modal-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        color: var(--accent-muted);
+        transition:
+          color 0.12s,
+          background 0.12s;
+        outline: none;
+      }
+      .modal-close:hover {
+        background: #27272a;
+        color: var(--accent);
+      }
+      .modal-close svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+      }
+      .modal-overlay.forced .modal-close {
+        display: none;
+      }
+      .modal-card-wrap {
+        position: relative;
+      }
+      .modal-footer {
+        font-size: 11px;
+        color: #3f3f46;
+        text-align: center;
+        line-height: 1.5;
+        font-family: "Geist Mono", monospace;
+      }
+
+      @media (max-width: 768px) {
+        .panel {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loading-screen" id="loading-screen">
+      <div class="loading-text">Loading Global Checkbox</div>
+      <div class="loading-dots">
+        <span class="dot"></span><span class="dot"></span
+        ><span class="dot"></span>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="user-drawer-overlay" id="user-drawer-overlay">
+      <div class="user-drawer">
+        <button
+          class="user-drawer-close"
+          id="user-drawer-close"
+          aria-label="Close"
+        >
+          <svg viewBox="0 0 14 14">
+            <path d="M1 1l12 12M13 1L1 13" stroke-linecap="round" />
+          </svg>
+        </button>
+        <div class="user-drawer-header">
+          <img
+            class="user-drawer-avatar"
+            id="drawer-avatar"
+            src=""
+            alt="avatar"
+            style="display: none"
+          />
+          <div
+            class="user-drawer-avatar-fallback"
+            id="drawer-avatar-fallback"
+            style="display: none"
+          >
+            ??
+          </div>
+          <div class="user-drawer-name" id="drawer-name">User</div>
+          <div class="user-drawer-email" id="drawer-email">
+            user@example.com
+          </div>
+        </div>
+        <div class="user-drawer-actions">
+          <button class="drawer-action-btn danger" id="drawer-logout-btn">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <polyline
+                points="16 17 21 12 16 7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <line
+                x1="21"
+                y1="12"
+                x2="9"
+                y2="12"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            Sign out
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal-card-wrap">
+        <div class="modal" id="modal">
+          <button class="modal-close" id="modal-close" aria-label="Close">
+            <svg viewBox="0 0 14 14">
+              <path d="M1 1l12 12M13 1L1 13" stroke-linecap="round" />
+            </svg>
+          </button>
+          <div class="modal-header">
+            <div class="modal-icon">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <div class="modal-title" id="modal-title">
+              Sign in to Global Checkbox
+            </div>
+            <div class="modal-desc" id="modal-desc">
+              Sign in to <strong>check boxes</strong>, track your activity, and
+              stay synced with users worldwide in real time.
+            </div>
+          </div>
+          <div class="modal-divider">continue with</div>
+          <button class="sagarauth-btn" id="sagarauth-btn">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M12 8v4l3 3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="btn-text">Sign in with SagarAuth</span>
+          </button>
+          <div class="modal-footer">
+            By signing in you agree to the terms of service
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="topbar"></div>
+      <div class="header">
+        <h1 class="title" id="main-title">
+          <svg class="globe-icon" id="title-globe" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M2 12h20" />
+            <path
+              d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+            />
+          </svg>
+          <img class="title-avatar" id="title-avatar" src="" alt="avatar" />
+          <div class="title-avatar-fallback" id="title-avatar-fallback"></div>
+          <span id="title-text">Global Checkbox</span>
+        </h1>
+        <p class="subtitle">
+          A shared checkbox grid updated in real time by all users
+        </p>
+      </div>
+
+      <div class="badges">
+        <div class="badge">
+          <span class="badge-dot online"></span>
+          <span id="online-count" class="badge-value">0</span>
+          <span>online</span>
+        </div>
+        <div class="badge">
+          <span class="badge-dot checked"></span>
+          <span id="checked-count" class="badge-value">0</span>
+          <span>checked</span>
+        </div>
+        <div class="badge">
+          <span class="badge-dot"></span>
+          <span id="unchecked-count" class="badge-value">0</span>
+          <span>unchecked</span>
+        </div>
+      </div>
+
+      <div id="vscroll-viewport">
+        <div id="vscroll-spacer">
+          <div id="vscroll-window"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const SAGAR_AUTH_BASE = "https://sagarauth.sagarkemble.dev";
+      const CLIENT_ID =
+        "cd4552c87b58291604c94a14c76c35a43571e994d09ef253d07de1bf6f76893d";
+      const CLIENT_SECRET =
+        "8d1a2c03213b9d3b08a7f3c18578650d9c800f9bffb2759f91d3665b5134f894";
+      const LOGIN_URL = `${SAGAR_AUTH_BASE}/auth/login?clientId=${CLIENT_ID}`;
+      const TOKEN_URL = `${SAGAR_AUTH_BASE}/auth/token?clientId=${CLIENT_ID}`;
+      const USERINFO_URL = `${SAGAR_AUTH_BASE}/auth/userinfo`;
+
+      const VS = {
+        CB_SIZE: 16,
+        CB_GAP: 10,
+        BUFFER_ROWS: 5,
+
+        cols: 0,
+        rowHeight: 0,
+        totalRows: 0,
+        viewportHeight: 0,
+
+        viewport: null,
+        spacer: null,
+        window: null,
+
+        stateArr: null,
+        total: 0,
+
+        renderedStartRow: -1,
+        renderedEndRow: -1,
+        checkboxEls: [],
+
+        rafId: null,
+      };
+
+      function computeLayout() {
+        const panelWidth = VS.viewport.clientWidth;
+        const cellSize = VS.CB_SIZE + VS.CB_GAP;
+        VS.cols = Math.max(1, Math.floor((panelWidth + VS.CB_GAP) / cellSize));
+        VS.rowHeight = cellSize;
+        VS.totalRows = Math.ceil(VS.total / VS.cols);
+
+        const panelTop =
+          VS.viewport.getBoundingClientRect().top + window.scrollY;
+        VS.viewportHeight = Math.max(400, window.innerHeight - panelTop - 40);
+
+        VS.viewport.style.height = VS.viewportHeight + "px";
+        VS.spacer.style.height = VS.totalRows * VS.rowHeight + "px";
+        VS.window.style.gridTemplateColumns = `repeat(${VS.cols}, ${VS.CB_SIZE}px)`;
+        VS.window.style.gap = VS.CB_GAP + "px";
+
+        document.documentElement.style.setProperty(
+          "--cb-size",
+          VS.CB_SIZE + "px",
+        );
+        document.documentElement.style.setProperty(
+          "--cb-gap",
+          VS.CB_GAP + "px",
+        );
+      }
+
+      function renderVisible() {
+        if (!VS.stateArr) return;
+
+        const scrollTop = VS.viewport.scrollTop;
+        const firstVisRow = Math.max(
+          0,
+          Math.floor(scrollTop / VS.rowHeight) - VS.BUFFER_ROWS,
+        );
+        const lastVisRow = Math.min(
+          VS.totalRows - 1,
+          Math.ceil((scrollTop + VS.viewportHeight) / VS.rowHeight) +
+            VS.BUFFER_ROWS,
+        );
+
+        if (
+          firstVisRow === VS.renderedStartRow &&
+          lastVisRow === VS.renderedEndRow
+        )
+          return;
+
+        VS.renderedStartRow = firstVisRow;
+        VS.renderedEndRow = lastVisRow;
+
+        const startIdx = firstVisRow * VS.cols;
+        const endIdx = Math.min(VS.total - 1, (lastVisRow + 1) * VS.cols - 1);
+        const count = endIdx - startIdx + 1;
+
+        const frag = document.createDocumentFragment();
+        VS.checkboxEls = new Array(count);
+
+        for (let i = 0; i < count; i++) {
+          const globalIdx = startIdx + i;
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.checked = VS.stateArr[globalIdx] === 1;
+          cb.dataset.idx = globalIdx;
+          VS.checkboxEls[i] = cb;
+          frag.appendChild(cb);
+        }
+
+        VS.window.innerHTML = "";
+        VS.window.appendChild(frag);
+
+        VS.window.style.top = firstVisRow * VS.rowHeight + "px";
+      }
+
+      function onScroll() {
+        if (VS.rafId) return;
+        VS.rafId = requestAnimationFrame(() => {
+          VS.rafId = null;
+          renderVisible();
+        });
+      }
+
+      function updateRenderedCheckbox(globalIdx, state) {
+        const startIdx = VS.renderedStartRow * VS.cols;
+        const localIdx = globalIdx - startIdx;
+        if (localIdx >= 0 && localIdx < VS.checkboxEls.length) {
+          const cb = VS.checkboxEls[localIdx];
+          if (cb && Number(cb.dataset.idx) === globalIdx) {
+            cb.checked = state;
+          }
+        }
+      }
+
+      function initVirtualScroll() {
+        VS.viewport = document.getElementById("vscroll-viewport");
+        VS.spacer = document.getElementById("vscroll-spacer");
+        VS.window = document.getElementById("vscroll-window");
+
+        computeLayout();
+        renderVisible();
+
+        VS.viewport.addEventListener("scroll", onScroll, { passive: true });
+
+        // Re-layout on resize
+        let resizeTimer;
+        window.addEventListener("resize", () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            computeLayout();
+            VS.renderedStartRow = -1; // force re-render
+            VS.renderedEndRow = -1;
+            renderVisible();
+          }, 120);
+        });
+      }
+
+      document
+        .getElementById("vscroll-window")
+        .addEventListener("click", (e) => {
+          const target = e.target;
+          if (target.tagName !== "INPUT") return;
+          e.preventDefault();
+
+          if (!isLoggedIn()) {
+            document.getElementById("modal-title").textContent =
+              "Sign in to check boxes";
+            document.getElementById("modal-desc").innerHTML =
+              "You need to <strong>sign in</strong> to interact with the checkbox grid. Join users worldwide in real time!";
+            openModal(true);
+            return;
+          }
+
+          const index = Number(target.dataset.idx);
+          const newState = VS.stateArr[index] === 0 ? 1 : 0;
+          socket.emit("checkboxChange", { index, state: newState === 1 });
+        });
+
+      function setCookie(name, value, days = 7) {
+        const expires = new Date(Date.now() + days * 864e5).toUTCString();
+        document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+      }
+      function getCookie(name) {
+        return document.cookie.split("; ").reduce((acc, pair) => {
+          const [k, v] = pair.split("=");
+          return k === name ? decodeURIComponent(v) : acc;
+        }, null);
+      }
+      function deleteCookie(name) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+      }
+
+      let toastTimer = null;
+      function showToast(msg, type = "info") {
+        const el = document.getElementById("toast");
+        el.textContent = msg;
+        el.className = "toast show" + (type === "error" ? " error" : "");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove("show"), 1500);
+      }
+
+      function getStoredUser() {
+        try {
+          return JSON.parse(localStorage.getItem("sagar_user"));
+        } catch {
+          return null;
+        }
+      }
+      function isLoggedIn() {
+        return !!getCookie("access_token") && !!getStoredUser();
+      }
+
+      function renderTitleArea(user) {
+        const globe = document.getElementById("title-globe");
+        const titleAvatar = document.getElementById("title-avatar");
+        const titleAvatarFallback = document.getElementById(
+          "title-avatar-fallback",
+        );
+        const titleText = document.getElementById("title-text");
+
+        if (user) {
+          globe.style.display = "none";
+          titleText.textContent = user.given_name || user.name || "User";
+          titleText.className = "title-text-clickable";
+          const initials =
+            (
+              (user.given_name?.[0] || "") + (user.family_name?.[0] || "")
+            ).toUpperCase() || "U";
+          if (user.picture) {
+            titleAvatar.src = user.picture;
+            titleAvatar.style.display = "block";
+            titleAvatarFallback.style.display = "none";
+            titleAvatar.onerror = () => {
+              titleAvatar.style.display = "none";
+              titleAvatarFallback.style.display = "flex";
+              titleAvatarFallback.textContent = initials;
+            };
+          } else {
+            titleAvatar.style.display = "none";
+            titleAvatarFallback.style.display = "flex";
+            titleAvatarFallback.textContent = initials;
+          }
+        } else {
+          globe.style.display = "";
+          titleText.textContent = "Global Checkbox";
+          titleText.className = "";
+          titleAvatar.style.display = "none";
+          titleAvatarFallback.style.display = "none";
+        }
+      }
+
+      function renderAuthState() {
+        const user = getStoredUser();
+        renderTitleArea(user && getCookie("access_token") ? user : null);
+      }
+
+      const overlay = document.getElementById("modal-overlay");
+
+      function resetSignInBtn() {
+        const btn = document.getElementById("sagarauth-btn");
+        btn.classList.remove("loading");
+        document.querySelector(".btn-text").textContent =
+          "Sign in with SagarAuth";
+      }
+
+      function openModal(forced = false) {
+        resetSignInBtn();
+        overlay.classList.add("active");
+        forced
+          ? overlay.classList.add("forced")
+          : overlay.classList.remove("forced");
+        document.body.style.overflow = "hidden";
+        if (!location.hash.startsWith("#login"))
+          history.pushState(null, "", "#login");
+      }
+
+      function closeModal() {
+        if (overlay.classList.contains("forced")) return;
+        overlay.classList.remove("active");
+        document.body.style.overflow = "";
+        history.replaceState(null, "", location.pathname + location.search);
+      }
+
+      document
+        .getElementById("modal-close")
+        .addEventListener("click", closeModal);
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) closeModal();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
+
+      const drawerOverlay = document.getElementById("user-drawer-overlay");
+
+      function openUserDrawer() {
+        const user = getStoredUser();
+        if (!user) return;
+        const drawerAvatar = document.getElementById("drawer-avatar");
+        const drawerAvatarFallback = document.getElementById(
+          "drawer-avatar-fallback",
+        );
+        const initials =
+          (
+            (user.given_name?.[0] || "") + (user.family_name?.[0] || "")
+          ).toUpperCase() || "U";
+        if (user.picture) {
+          drawerAvatar.src = user.picture;
+          drawerAvatar.style.display = "block";
+          drawerAvatarFallback.style.display = "none";
+          drawerAvatar.onerror = () => {
+            drawerAvatar.style.display = "none";
+            drawerAvatarFallback.style.display = "flex";
+            drawerAvatarFallback.textContent = initials;
+          };
+        } else {
+          drawerAvatar.style.display = "none";
+          drawerAvatarFallback.style.display = "flex";
+          drawerAvatarFallback.textContent = initials;
+        }
+        document.getElementById("drawer-name").textContent =
+          user.name || user.given_name || "User";
+        document.getElementById("drawer-email").textContent = user.email || "—";
+        drawerOverlay.classList.add("active");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeUserDrawer() {
+        drawerOverlay.classList.remove("active");
+        document.body.style.overflow = "";
+      }
+
+      document
+        .getElementById("user-drawer-close")
+        .addEventListener("click", closeUserDrawer);
+      drawerOverlay.addEventListener("click", (e) => {
+        if (e.target === drawerOverlay) closeUserDrawer();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeUserDrawer();
+      });
+      document
+        .getElementById("title-avatar")
+        .addEventListener("click", openUserDrawer);
+      document
+        .getElementById("title-avatar-fallback")
+        .addEventListener("click", openUserDrawer);
+      document.getElementById("title-text").addEventListener("click", (e) => {
+        if (e.target.classList.contains("title-text-clickable"))
+          openUserDrawer();
+      });
+
+      document.getElementById("sagarauth-btn").addEventListener("click", () => {
+        document.getElementById("sagarauth-btn").classList.add("loading");
+        window.location.href = LOGIN_URL;
+      });
+
+      document
+        .getElementById("drawer-logout-btn")
+        .addEventListener("click", () => {
+          deleteCookie("access_token");
+          deleteCookie("refresh_token");
+          localStorage.removeItem("sagar_user");
+          closeUserDrawer();
+          renderAuthState();
+          showToast("Signed out successfully");
+          history.replaceState(null, "", location.pathname);
+        });
+
+      async function handleOAuthCallback(code) {
+        showToast("Signing you in…");
+        try {
+          const tokenRes = await fetch(TOKEN_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              authorizationCode: code,
+              clientSecret: CLIENT_SECRET,
+            }),
+          });
+          const tokenData = await tokenRes.json();
+          if (!tokenData.success || !tokenData.data)
+            throw new Error(tokenData.message || "Token exchange failed");
+          const { accessToken, refreshToken } = tokenData.data;
+          setCookie("access_token", accessToken, 7);
+          setCookie("refresh_token", refreshToken, 7);
+          const userRes = await fetch(USERINFO_URL, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          const userData = await userRes.json();
+          if (!userData.success || !userData.data)
+            throw new Error(userData.message || "Failed to fetch user info");
+          localStorage.setItem("sagar_user", JSON.stringify(userData.data));
+          history.replaceState(null, "", location.pathname);
+          renderAuthState();
+          overlay.classList.remove("forced");
+          closeModal();
+          showToast(`Welcome, ${userData.data.given_name || "User"}! 👋`);
+        } catch (err) {
+          console.error("OAuth callback error:", err);
+          history.replaceState(null, "", location.pathname);
+          resetSignInBtn();
+          showToast(
+            err.message || "Sign in failed. Please try again.",
+            "error",
+          );
+          renderAuthState();
+        }
+      }
+
+      (function init() {
+        const hash = location.hash;
+        if (hash.startsWith("#login")) {
+          const hashQuery = hash.includes("?")
+            ? hash.slice(hash.indexOf("?") + 1)
+            : "";
+          const params = new URLSearchParams(hashQuery);
+          const code = params.get("code");
+          if (code) {
+            openModal(false);
+            const btn = document.getElementById("sagarauth-btn");
+            btn.classList.add("loading");
+            document.querySelector(".btn-text").textContent =
+              "Completing sign in";
+            handleOAuthCallback(code);
+          } else {
+            openModal(false);
+          }
+        }
+        renderAuthState();
+      })();
+
+      setInterval(async () => {
+        await fetch("http:localhost:3000/health");
+      }, 3000);
+
+      const socket = io();
+      let checkedCount = 0;
+
+      socket.on("onConnect", (arr) => {
+        VS.total = arr.length;
+        VS.stateArr = new Uint8Array(arr.length);
+        checkedCount = 0;
+        for (let i = 0; i < arr.length; i++) {
+          VS.stateArr[i] = arr[i] ? 1 : 0;
+          if (arr[i]) checkedCount++;
+        }
+
+        initVirtualScroll();
+        updateCheckboxCounts();
+        document.getElementById("loading-screen").classList.add("hidden");
+      });
+
+      socket.on("userCount", (userCount) => {
+        document.getElementById("online-count").textContent = parseInt(
+          userCount,
+          10,
+        );
+      });
+
+      socket.on("checkboxChange", (data) => {
+        const { index, state } = JSON.parse(data);
+        const prev = VS.stateArr[index];
+        const newVal = state ? 1 : 0;
+        VS.stateArr[index] = newVal;
+        if (prev !== newVal) checkedCount += newVal ? 1 : -1;
+        // Update DOM if this checkbox is currently rendered
+        updateRenderedCheckbox(index, state);
+        updateCheckboxCounts();
+      });
+
+      socket.on("error", (err) => {
+        console.error("Error from server:", err.message);
+      });
+      socket.on("server:rateLimitExceeded", () => {
+        showToast("Slow down! ");
+      });
+
+      function updateCheckboxCounts() {
+        document.getElementById("checked-count").textContent = checkedCount;
+        document.getElementById("unchecked-count").textContent =
+          VS.total - checkedCount;
+      }
+    </script>
+  </body>
+</html>
