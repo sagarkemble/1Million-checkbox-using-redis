@@ -101,7 +101,6 @@ subscriber.on("message", (channel, message) => {
     io.emit("checkboxChange", message);
   }
   if (channel === "internal-server:userCount") {
-    console.log(message);
     io.emit("userCount", message);
   }
 });

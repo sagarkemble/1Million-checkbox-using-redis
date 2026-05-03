@@ -1,15 +1,31 @@
-# 🗳️ Global Checkbox
+<div
+  class="container"
+  align="center"
+>
+ <img src="./public/logo.png" style="height:5rem"/>
 
-A real-time collaborative app where users across the world can toggle a shared grid of **10,000 checkboxes** — and see each other's changes instantly.
+# 1 Million Checkbox
+
+</div>
+
+<p align="center">
+<a href="#"><img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express.js"></a>
+<a href="#"><img src="https://img.shields.io/badge/Socket.IO-010101?style=for-the-badge&logo=socketdotio&logoColor=white" alt="Socket.IO"></a>
+<a href="#"><img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis"></a>
+<a href="#"><img src="https://img.shields.io/badge/ioredis-1E1E1E?style=for-the-badge" alt="ioredis"></a>
+<a href="#"><img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"></a>
+<a href="#"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"></a>
+<a href="https://pnpm.io/"><img src="https://img.shields.io/badge/pnpm-F69220?style=for-the-badge&logo=pnpm&logoColor=white" alt="pnpm"></a>
+
+A real-time collaborative app where users across the world can toggle a shared grid of **1,000,000 checkboxes** and see each other's changes instantly.
 
 ## Features
 
 - 1,000,000 shared checkboxes synced live across all users
 - Login via SagarAuth (OAuth 2.0)
 - Live online user count
-- Rate limiting — max 1 checkbox change every 2 seconds per user
-- Multi-instance ready via Redis Pub/Sub
-- Toast notifications for errors and rate limit hits
+- Rate limiting max 1 checkbox change every 2 seconds per user
+- Horizontal scaling possible
 
 ---
 
@@ -17,7 +33,7 @@ A real-time collaborative app where users across the world can toggle a shared g
 
 ### 1. Start Redis with Docker
 
-The app needs Redis running. The easiest way is Docker:
+The app needs Redis running. So just run:
 
 ```bash
 docker compose up -d
@@ -54,16 +70,6 @@ pnpm dev
 
 App will be running at → **http://localhost:3000**
 
----
-
-## Environment Variables
-
-| Variable | Description                | Default |
-| -------- | -------------------------- | ------- |
-| `PORT`   | Port the server listens on | `3000`  |
-
----
-
 ## 🗄️ Redis Setup
 
 The `docker-compose.yml` handles everything. Just run `docker compose up -d`.
@@ -89,14 +95,14 @@ The app creates **3 Redis connections** internally:
 
 SagarAuth is a custom OAuth provider. Here's how to set it up and how the login flow works.
 
-### Step 0 — Register your app
+### Step 0 - Register your app
 
 Go to [sagarauth.sagarkemble.dev](https://sagarauth.sagarkemble.dev) and register your app. You'll get a:
 
 - `clientId`
 - `clientSecret`
 
-### Step 1 — User clicks Login
+### Step 1 - User clicks Login
 
 The app redirects the user to SagarAuth with your `clientId`:
 
@@ -104,11 +110,11 @@ The app redirects the user to SagarAuth with your `clientId`:
 https://sagarauth.sagarkemble.dev?clientId=YOUR_CLIENT_ID
 ```
 
-### Step 2 — User signs in on SagarAuth
+### Step 2 - User signs in on SagarAuth
 
 The user enters their credentials on the SagarAuth page.
 
-### Step 3 — Redirect back with an authorization code
+### Step 3 - Redirect back with an authorization code
 
 After successful login, SagarAuth redirects the user back to your app:
 
@@ -118,7 +124,7 @@ http://localhost:3000#login?code=AUTHORIZATION_CODE
 
 The app reads the `code` from the URL hash.
 
-### Step 4 — Exchange the code for tokens
+### Step 4 - Exchange the code for tokens
 
 The app sends the `code` + `clientSecret` to SagarAuth's token endpoint:
 
@@ -128,7 +134,7 @@ POST https://sagarauth.sagarkemble.dev/auth/token
 
 In return, SagarAuth gives back an **access token** and a **refresh token**. These are stored in cookies.
 
-### Step 5 — Fetch user info
+### Step 5 - Fetch user info
 
 The app sends the access token to:
 
@@ -138,27 +144,7 @@ GET https://sagarauth.sagarkemble.dev/auth/userinfo
 
 This returns the user's profile (name, email, avatar etc.), which is stored and displayed in the UI.
 
-```
-User clicks Login
-      │
-      ▼
-Redirect → sagarauth.sagarkemble.dev?clientId=xxx
-      │
-      ▼ (user signs in)
-Redirect back → yourapp.com#login?code=AUTH_CODE
-      │
-      ▼
-POST /auth/token  (code + clientSecret)
-      │
-      ▼
-Receive access_token + refresh_token  →  store in cookies
-      │
-      ▼
-GET /auth/userinfo  (access_token)
-      │
-      ▼
-Display user profile in UI
-```
+![Auth Flow](./public/authFlow.png)
 
 ---
 
@@ -227,7 +213,7 @@ socket.on("server:rateLimitExceeded", () => {
 
 ### Why Redis Pub/Sub?
 
-When you run multiple server instances (horizontal scaling), each instance handles different clients. Redis Pub/Sub acts as a message bus — one instance publishes a change, all instances receive it and forward it to their own clients. This keeps all users in sync regardless of which server instance they're connected to.
+When you run multiple server instances (horizontal scaling), each instance handles different clients. Redis Pub/Sub acts as a message bus - one instance publishes a change, all instances receive it and forward it to their own clients. This keeps all users in sync regardless of which server instance they're connected to.
 
 ---
 
@@ -287,8 +273,6 @@ socket.on("server:rateLimitExceeded", () => {
 | Scope             | Per socket connection                            |
 | Storage           | In-memory Map (fast, auto-cleared on disconnect) |
 
-> ⚠️ Note: Because the map is in-memory, rate limit state is not shared across multiple server instances. For production, this should be moved to Redis.
-
 ---
 
 ## 📁 Project Structure
@@ -305,13 +289,3 @@ global-checkbox-redis/
 ├── package.json
 └── tsconfig.json
 ```
-
----
-
-## 🌐 Live Demo
-
-[https://one0-000-global-checkbox.onrender.com/](https://one0-000-global-checkbox.onrender.com/)
-
----
-
-Built by **Sagar Kemble**
