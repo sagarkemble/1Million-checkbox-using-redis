@@ -2,7 +2,7 @@
   class="container"
   align="center"
 >
- <img src="./public/logo.png" style="height:5rem"/>
+ <img src="./public/demo.png" />
 
 # 1 Million Checkbox
 
